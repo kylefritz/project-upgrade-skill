@@ -1,0 +1,279 @@
+<title>__REPO__ Approve / Feedback</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one column built for deciding. What shipped first, then each suggestion with its own Approve and Feedback controls. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --sunk: #eef1ef; --fg: #18201d; --muted: #59645f; --line: #d9dfdb;
+  --accent: #0d6b58; --accent-fg: #ffffff; --accent-soft: #dff0eb;
+  --sev-high: #c03a2b; --sev-medium: #a35f00; --sev-low: #5b6670; --ok: #1a7f37; --landed: #6f42c1;
+  --warn-bg: #fff4dc; --warn-fg: #6b4500;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --surface: #1a201d; --sunk: #151a18; --fg: #e4ebe7; --muted: #9aa69f; --line: #2c3531;
+  --accent: #4cc3a5; --accent-fg: #06201a; --accent-soft: #163a31;
+  --sev-high: #ff7b6b; --sev-medium: #f0a73a; --sev-low: #9aa5ae; --ok: #4fc66d; --landed: #b392f0;
+  --warn-bg: #3a2e12; --warn-fg: #f6d48c; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #1a201d; --sunk: #151a18; --fg: #e4ebe7; --muted: #9aa69f; --line: #2c3531;
+  --accent: #4cc3a5; --accent-fg: #06201a; --accent-soft: #163a31;
+  --sev-high: #ff7b6b; --sev-medium: #f0a73a; --sev-low: #9aa5ae; --ok: #4fc66d; --landed: #b392f0;
+  --warn-bg: #3a2e12; --warn-fg: #f6d48c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+a { color: var(--accent); }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+h3 { font-size: 1.08rem; font-weight: 600; }
+.sub { color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; }
+.mono { font-family: var(--mono); font-size: 0.86em; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.count { font-size: 1rem; font-weight: 600; }
+.count .n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.meter { flex: 1 1 160px; height: 8px; background: var(--sunk); border-radius: 99px; overflow: hidden; display: flex; min-width: 120px; }
+.meter i { display: block; height: 100%; }
+.notice { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 14px; font-size: 0.92rem; }
+.empty { border: 1px dashed var(--line); border-radius: 10px; padding: 28px 20px; color: var(--muted); text-align: center; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; display: grid; gap: 8px; }
+.shipped { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.shipped li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.st { font: 600 0.7rem var(--sans); text-transform: uppercase; letter-spacing: 0.05em; border-radius: 4px; padding: 0 6px; border: 1px solid currentColor; }
+.st.landed { color: var(--landed); } .st.open { color: var(--ok); } .st.other { color: var(--muted); }
+section.group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; grid-template-columns: minmax(0, 1fr); border-left: 4px solid var(--sev, var(--line)); }
+.sev-high { --sev: var(--sev-high); } .sev-medium { --sev: var(--sev-medium); } .sev-low { --sev: var(--sev-low); }
+.card.is-approved { border-color: var(--ok); border-left-color: var(--ok); }
+.card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+.sevtag { font: 600 0.72rem var(--sans); text-transform: uppercase; letter-spacing: 0.05em; color: var(--sev); }
+.trust { font-size: 0.8rem; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; }
+.state { margin-left: auto; font: 600 0.78rem var(--sans); border-radius: 999px; padding: 2px 10px; }
+.state.waiting { background: var(--warn-bg); color: var(--warn-fg); }
+.state.approved { background: var(--ok); color: var(--surface); }
+.state.feedback { background: var(--accent-soft); color: var(--fg); }
+.state.done { background: var(--landed); color: var(--surface); }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 0.94rem; }
+.facts dt { color: var(--muted); font-weight: 500; }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; max-width: 68ch; }
+.facts dd.approve { font-weight: 600; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.links { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.shots figure { margin: 0; display: grid; gap: 4px; }
+.shots a { display: block; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--sunk); }
+.shots img { display: block; width: 100%; height: auto; max-height: 260px; object-fit: contain; object-position: top; }
+.shots figcaption { font-size: 0.8rem; color: var(--muted); }
+.tag { font: 600 0.7rem var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-right: 4px; }
+.decide { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.reply { padding: 8px 12px; border-radius: 8px; background: var(--sunk); display: grid; gap: 2px; }
+.reply.claude { background: var(--accent-soft); }
+.reply .who { font-size: 0.8rem; color: var(--muted); }
+.reply p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+textarea { width: 100%; min-height: 56px; resize: vertical; font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fb { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+@media (max-width: 520px) { .fb { grid-template-columns: 1fr; } }
+button.btn { font: 600 0.9rem var(--sans); border-radius: 7px; padding: 8px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+button.btn.approve { background: var(--ok); color: var(--surface); border-color: var(--ok); }
+button.btn.link { border: none; background: none; color: var(--accent); padding: 4px 6px; font-weight: 500; }
+button.btn:disabled { opacity: 0.5; cursor: default; }
+.flash { font-size: 0.85rem; color: var(--muted); }
+.foot { color: var(--muted); font-size: 0.9rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.foot dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; }
+.foot dt { font-weight: 600; } .foot dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .foot dl { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(() => {
+  // Everything shown comes from the artifact db: meta/run, decisions/*, responses/* (one per decision, same id).
+  const S = { meta: null, decisions: [], responses: {}, got: { meta: false, decisions: false, responses: false },
+    db: null, user: null, me: null, readOnly: false, offline: false, slow: false, error: "",
+    drafts: {}, busy: {}, flash: {} };
+  const SEV = { high: 0, medium: 1, low: 2 };
+
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat(Infinity)) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    return el;
+  }
+  const safeUrl = (u) => (typeof u === "string" && (/^https:\/\//.test(u) || /^\/_blob\//.test(u) || /^data:image\//.test(u))) ? u : null;
+  const ext = (url, label) => h("a", { href: url, target: "_blank", rel: "noopener" }, label);
+  function ago(iso) {
+    const t = Date.parse(iso); if (!t) return "";
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 1) return "just now"; if (m < 60) return m + " min ago";
+    const hr = Math.round(m / 60); if (hr < 24) return hr + " h ago";
+    return new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  function stateOf(d) {
+    if (d.outcome && d.outcome.text) return "done";
+    const r = S.responses[d.id];
+    return r && (r.status === "approved" || r.status === "feedback") ? r.status : "waiting";
+  }
+
+  async function respond(d, status) {
+    if (!S.db) return;
+    const text = (S.drafts[d.id] || "").trim();
+    if (status === "feedback" && !text) { S.flash[d.id] = "Write your feedback first."; render(); return; }
+    S.busy[d.id] = true; render();
+    const prev = S.responses[d.id];
+    const history = Array.isArray(prev && prev.history) ? prev.history.slice(-19) : [];
+    if (prev && prev.status) history.push({ status: prev.status, feedback: prev.feedback || "", at: prev.updated_at || "" });
+    try {
+      await S.db.doc("responses/" + d.id).set({ status, feedback: status === "feedback" ? text : "", title: d.title || "",
+        user_id: S.me, updated_at: new Date().toISOString(), history });
+      if (status === "feedback") S.drafts[d.id] = "";
+      S.flash[d.id] = status === "approved" ? "Approved. Claude does this next." : "Feedback sent. Claude replies here.";
+    } catch (e) {
+      if (e && e.code === "invalid_argument") { S.readOnly = true; S.flash[d.id] = "You can read this page but not answer on it."; }
+      else S.flash[d.id] = "Couldn't save. Check your connection and try again.";
+    }
+    S.busy[d.id] = false; render();
+  }
+  async function undo(d) {
+    if (!S.db) return;
+    S.busy[d.id] = true; render();
+    try { await S.db.doc("responses/" + d.id).delete(); S.flash[d.id] = "Back to waiting."; }
+    catch (e) { S.flash[d.id] = "Couldn't undo. Try again."; }
+    S.busy[d.id] = false; render();
+  }
+
+  function card(d) {
+    const st = stateOf(d), r = S.responses[d.id];
+    const sev = SEV[d.severity] != null ? d.severity : "low";
+    const labels = { waiting: "Waiting for you", approved: "Approved", feedback: "Feedback sent", done: "Done" };
+    const facts = [["What", d.what], ["Why it matters", d.why], ["Approve means", d.approve_does], ["What Claude needs", d.need]].filter(([, v]) => v);
+    const links = (Array.isArray(d.links) ? d.links : []).filter((l) => safeUrl(l && l.url));
+    const shots = (Array.isArray(d.screenshots) ? d.screenshots : []).filter((s) => safeUrl(s && s.url));
+    const canAct = S.db && !S.readOnly && st !== "done";
+    const ta = canAct ? h("textarea", { id: "fb-" + d.id, placeholder: "Not now, do it differently, or a question", "aria-label": "Feedback on " + (d.title || "this suggestion") }) : null;
+    if (ta) { ta.value = S.drafts[d.id] || ""; ta.addEventListener("input", () => { S.drafts[d.id] = ta.value; }); }
+    return h("article", { class: "card sev-" + sev + (st === "approved" ? " is-approved" : ""), id: "d-" + d.id },
+      h("div", { class: "card-head" },
+        h("span", { class: "sevtag", text: sev }),
+        d.trust ? h("span", { class: "trust", text: d.trust === "confirmed" ? "Confirmed by Claude" : "Reviewer read, not run" }) : null,
+        h("span", { class: "state " + st, text: labels[st] })),
+      h("h3", { text: d.title || "Untitled suggestion" }),
+      facts.length ? h("dl", { class: "facts" }, facts.map(([k, v]) => [h("dt", { text: k }), h("dd", { class: k === "Approve means" ? "approve" : null, text: v })])) : null,
+      links.length ? h("div", { class: "links" }, links.map((l) => ext(l.url, l.label || l.url))) : null,
+      shots.length ? h("div", { class: "shots" }, shots.map((s) => h("figure", {},
+        h("a", { href: s.url, target: "_blank", rel: "noopener" }, h("img", { src: s.url, alt: s.caption || "Screenshot", loading: "lazy" })),
+        h("figcaption", {}, s.label ? h("span", { class: "tag", text: s.label }) : null, s.caption || "")))) : null,
+      h("div", { class: "decide" },
+        r && r.status === "feedback" && r.feedback ? h("div", { class: "reply" },
+          h("span", { class: "who" }, h("b", { "data-uid": r.user_id || "", text: "Someone" }), " · " + ago(r.updated_at)), h("p", { text: r.feedback })) : null,
+        d.claude_reply ? h("div", { class: "reply claude" }, h("span", { class: "who" }, h("b", { text: "Claude" }), d.claude_reply_at ? " · " + ago(d.claude_reply_at) : ""), h("p", { text: d.claude_reply })) : null,
+        d.outcome && d.outcome.text ? h("div", { class: "reply claude" }, h("span", { class: "who" }, h("b", { text: "Done" })),
+          h("p", {}, d.outcome.text, safeUrl(d.outcome.url) ? [" ", ext(d.outcome.url, "See it")] : null)) : null,
+        canAct ? h("div", { class: "row" },
+          st === "approved"
+            ? [h("span", { class: "flash", text: "You approved this " + ago(r.updated_at) + "." }), h("button", { class: "btn link", disabled: S.busy[d.id], onclick: () => undo(d) }, "Undo")]
+            : h("button", { class: "btn approve", disabled: S.busy[d.id], onclick: () => respond(d, "approved") }, "Approve")) : null,
+        canAct ? h("div", { class: "fb" }, ta, h("button", { class: "btn", disabled: S.busy[d.id], onclick: () => respond(d, "feedback") }, "Send feedback")) : null,
+        S.flash[d.id] ? h("span", { class: "flash", role: "status", text: S.flash[d.id] }) : null));
+  }
+
+  function render() {
+    const app = document.getElementById("app");
+    const focused = document.activeElement && document.activeElement.id;
+    const sel = focused && document.activeElement.selectionStart;
+    const m = S.meta || {};
+    const repo = m.repo || "__REPO__";
+    const ds = S.decisions.slice().sort((a, b) => (SEV[a.severity] ?? 3) - (SEV[b.severity] ?? 3) || (a.order ?? 1e9) - (b.order ?? 1e9));
+    const groupOrder = []; for (const d of S.decisions.slice().sort((a, b) => (a.order ?? 1e9) - (b.order ?? 1e9))) { const g = d.group || "Decisions"; if (!groupOrder.includes(g)) groupOrder.push(g); }
+    const tally = { waiting: 0, approved: 0, feedback: 0, done: 0 }; for (const d of ds) tally[stateOf(d)]++;
+    const loaded = S.got.meta && S.got.decisions && S.got.responses;
+
+    const head = h("header", { style: "display:grid;gap:8px" },
+      h("h2", { text: "Project upgrade" }),
+      h("h1", { text: repo + " · Approve / Feedback" }),
+      h("div", { class: "sub" },
+        safeUrl(m.repo_url) ? ext(m.repo_url, m.repo_url.replace(/^https:\/\//, "")) : null,
+        m.updated_at ? h("span", { text: "Updated " + ago(m.updated_at) }) : null,
+        safeUrl(m.changes_url) ? ext(m.changes_url, "Planned & Changed page") : null),
+      h("p", { style: "margin:0;color:var(--muted);max-width:68ch", text: "Only the calls Claude couldn't make from the evidence. Approve one and Claude does exactly what it says; anything short of a yes goes in its feedback box." }));
+
+    const total = ds.length || 1, w = (n) => (100 * n / total) + "%";
+    const bar = h("div", { class: "bar" },
+      h("span", { class: "count" }, h("span", { class: "n", text: String(tally.waiting) }), " of ", h("span", { class: "n", text: String(ds.length) }), " waiting for you"),
+      h("div", { class: "meter", role: "img", "aria-label": `${tally.approved} approved, ${tally.feedback} with feedback, ${tally.done} done, ${tally.waiting} waiting` },
+        h("i", { style: `width:${w(tally.done)};background:var(--landed)` }), h("i", { style: `width:${w(tally.approved)};background:var(--ok)` }),
+        h("i", { style: `width:${w(tally.feedback)};background:var(--accent)` })));
+
+    const notices = [];
+    if (S.offline) notices.push("Open this page on claude.ai to answer. It can't reach its data here.");
+    else if (S.error) notices.push(S.error);
+    else if (S.slow && !loaded) notices.push("The suggestions can't be reached yet. They load as soon as the connection answers.");
+    if (S.readOnly) notices.push("You can read this page, but answering is off for your access level.");
+
+    const shipped = (Array.isArray(m.shipped) ? m.shipped : []).filter((p) => p && p.title);
+    const issues = (Array.isArray(m.issues) ? m.issues : []).filter((i) => safeUrl(i && i.url));
+    const ship = shipped.length || issues.length ? h("section", { class: "panel", "aria-label": "What shipped" },
+      h("h2", { text: "What shipped" }),
+      shipped.length ? h("ul", { class: "shipped" }, shipped.map((p) => h("li", {},
+        h("span", { class: "st " + (p.state === "landed" ? "landed" : p.state === "open" ? "open" : "other"), text: p.state || "PR" }),
+        safeUrl(p.url) ? ext(p.url, (p.number ? "#" + p.number + " " : "") + p.title) : h("span", { text: p.title })))) : null,
+      issues.length ? [h("h2", { text: "Issues filed for later", style: "margin-top:6px" }), h("ul", { class: "shipped" }, issues.map((i) => h("li", {}, ext(i.url, "#" + (i.number ?? "") + " " + (i.title || "")))))] : null) : null;
+
+    const body = [];
+    if (!loaded && !S.offline) body.push(h("div", { class: "empty", text: "Loading suggestions…" }));
+    else if (!ds.length) body.push(h("div", { class: "empty", text: "Nothing needs your call. Everything else shipped as pull requests or went to issues." }));
+    else for (const g of groupOrder) {
+      const list = ds.filter((d) => (d.group || "Decisions") === g);
+      body.push(h("section", { class: "group", "aria-label": g }, h("h2", { text: g }), list.map(card)));
+    }
+
+    const cov = m.coverage || {};
+    const covRows = [["Read in full", cov.read], ["Sampled", cov.sampled], ["Not read", cov.not_read], ["Dropped as wrong", cov.dropped]]
+      .filter(([, v]) => Array.isArray(v) ? v.length : v);
+    const foot = covRows.length ? h("footer", { class: "foot" }, h("h2", { text: "Coverage" }),
+      h("dl", {}, covRows.map(([k, v]) => [h("dt", { text: k }), h("dd", { text: Array.isArray(v) ? v.join(" · ") : v })]))) : null;
+
+    app.replaceChildren(head, bar, ...notices.map((t) => h("div", { class: "notice", role: "status", text: t })), ship || "", ...body, foot || "");
+    if (focused) { const el = document.getElementById(focused); if (el) { el.focus(); if (sel != null && el.setSelectionRange) try { el.setSelectionRange(sel, sel); } catch (e) {} } }
+    nameAuthors();
+  }
+
+  async function nameAuthors() {
+    if (!S.user) return;
+    const els = [...document.querySelectorAll("[data-uid]")].filter((e) => e.dataset.uid);
+    if (!els.length) return;
+    const ps = await S.user.profiles([...new Set(els.map((e) => e.dataset.uid))]);
+    for (const el of els) { const p = ps[el.dataset.uid]; if (p) el.textContent = p.isMe ? (p.name || "You") + " (you)" : (p.name || "Someone"); }
+  }
+
+  render();
+  (async () => {
+    if (!window.claude || !window.claude.use) { S.offline = true; render(); return; }
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db) { S.offline = true; render(); return; }
+    S.db = db; S.user = user;
+    if (user) { S.me = await user.id(); if ((await user.can("data.write")) === false) S.readOnly = true; }
+    const timer = setTimeout(() => { S.slow = true; render(); }, 10000);
+    const settle = (snap) => { if (!snap.metadata.fromCache) { clearTimeout(timer); S.slow = false; } };
+    const fail = (e) => { clearTimeout(timer); S.error = e && e.code === "revoked" ? "Your access to this page changed. Reload to see it." : "The page stopped updating. Reload it to reconnect."; render(); };
+    db.doc("meta/run").onSnapshot((s) => { S.meta = s.exists ? s.data() : null; S.got.meta = true; settle(s); render(); }, fail);
+    db.collection("decisions").onSnapshot((q) => { S.decisions = q.docs.map((d) => ({ ...d.data(), id: d.id })); S.got.decisions = true; settle(q); render(); }, fail);
+    db.collection("responses").onSnapshot((q) => { const r = {}; for (const d of q.docs) r[d.id] = d.data(); S.responses = r; S.got.responses = true; settle(q); render(); }, fail);
+  })();
+})();
+</script>

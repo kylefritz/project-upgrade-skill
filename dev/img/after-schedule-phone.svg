@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="560" viewBox="0 0 390 560" font-family="Helvetica, Arial, sans-serif">
+  <rect width="390" height="560" fill="#f5f7fa"/>
+  <rect width="390" height="56" fill="#1d3557"/>
+  <text x="16" y="35" fill="#fff" font-size="18" font-weight="700">Lane schedule</text>
+  <g font-size="13" fill="#222">
+    <g transform="translate(16,72)"><rect width="358" height="96" rx="10" fill="#fff" stroke="#d7dde5"/>
+      <text x="14" y="26" font-size="15" font-weight="700">6:00</text>
+      <text x="14" y="50">Lane 1  Masters</text><text x="190" y="50">Lane 2  Open swim</text>
+      <text x="14" y="76">Lane 3  Open swim</text><text x="190" y="76">Lane 4  Lessons</text></g>
+    <g transform="translate(16,180)"><rect width="358" height="96" rx="10" fill="#fff" stroke="#d7dde5"/>
+      <text x="14" y="26" font-size="15" font-weight="700">7:00</text>
+      <text x="14" y="50">Lane 1  Masters</text><text x="190" y="50">Lane 2  Aqua fit</text>
+      <text x="14" y="76">Lane 3  Open swim</text><text x="190" y="76" fill="#888">Lane 4  Closed</text></g>
+    <g transform="translate(16,288)"><rect width="358" height="96" rx="10" fill="#fff" stroke="#d7dde5"/>
+      <text x="14" y="26" font-size="15" font-weight="700">8:00</text>
+      <text x="14" y="50">Lane 1  Swim team</text><text x="190" y="50">Lane 2  Swim team</text>
+      <text x="14" y="76">Lane 3  Lessons</text><text x="190" y="76">Lane 4  Lessons</text></g>
+    <g transform="translate(16,396)"><rect width="358" height="96" rx="10" fill="#fff" stroke="#d7dde5"/>
+      <text x="14" y="26" font-size="15" font-weight="700">9:00</text>
+      <text x="14" y="50">Lane 1  Open swim</text><text x="190" y="50">Lane 2  Open swim</text>
+      <text x="14" y="76">Lane 3  Aqua fit</text><text x="190" y="76">Lane 4  Open swim</text></g>
+  </g>
+</svg>

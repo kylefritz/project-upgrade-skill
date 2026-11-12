@@ -1,0 +1,68 @@
+{
+  "meta/run": {
+    "repo": "tidepool",
+    "repo_url": "https://github.com/example/tidepool",
+    "phase": "Step 4 of 6: fixing and landing",
+    "updated_at": "2026-11-11T19:40:00Z",
+    "decisions_url": "https://claude.ai/code/artifact/example-decisions",
+    "issues": [
+      { "number": 214, "title": "Move member photos out of public/ behind a signed URL", "url": "https://github.com/example/tidepool/issues/214" },
+      { "number": 215, "title": "Split the 1,900-line ReportsController", "url": "https://github.com/example/tidepool/issues/215" }
+    ]
+  },
+  "changes/schedule-phone": {
+    "order": 1, "status": "landed", "kind": "UI",
+    "title": "Lane schedule fits a phone screen",
+    "summary": "The schedule was a five-column table that scrolled sideways on phones, which is where 81% of its views come from. It is now one card per hour.",
+    "why": "Members check lane times poolside. Request logs: 4,210 schedule views last month, 3,410 from phones.",
+    "evidence": "Playwright at 390 px: page width 620 px before, 390 px after.",
+    "verified": "System test for the schedule at phone width; checked live after deploy.",
+    "pr": { "number": 208, "url": "https://github.com/example/tidepool/pull/208" },
+    "screenshots": [
+      { "url": "demo:before-schedule-phone.svg", "label": "Before", "caption": "390 px wide" },
+      { "url": "demo:after-schedule-phone.svg", "label": "After", "caption": "390 px wide" }
+    ],
+    "updated_at": "2026-11-11T18:05:00Z"
+  },
+  "changes/slow-tests": {
+    "order": 2, "status": "landed", "kind": "Tests and guards",
+    "title": "Stop three tests sleeping through real retry backoff",
+    "summary": "WeatherClient retried with real sleeps in tests. Stubbing the clock cut the suite from 211 s to 58 s.",
+    "measure": "Suite 211 s → 58 s, same 1,412 tests passing",
+    "pr": { "number": 209, "url": "https://github.com/example/tidepool/pull/209" },
+    "screenshots": [ { "url": "demo:test-times.svg", "caption": "Wall time before and after" } ],
+    "updated_at": "2026-11-11T18:40:00Z"
+  },
+  "changes/dead-mailer": {
+    "order": 3, "status": "pr_open", "kind": "Dead code",
+    "title": "Remove the WaitlistMailer and its four templates",
+    "summary": "Nothing has sent it since the waitlist feature was removed in March.",
+    "evidence": "No callers (grepped mailer name, deliver_later, the four template names, and the jobs); mail log shows zero sends since 2026-03-14.",
+    "pr": { "number": 211, "url": "https://github.com/example/tidepool/pull/211" },
+    "updated_at": "2026-11-11T19:20:00Z"
+  },
+  "changes/stale-docs": {
+    "order": 4, "status": "planned", "kind": "Docs",
+    "title": "Fix the README's setup steps",
+    "summary": "It still says to run bin/setup with Redis. The app moved to Solid Queue and has no Redis.",
+    "updated_at": "2026-11-11T19:30:00Z"
+  },
+  "changes/unused-gems": {
+    "order": 5, "status": "dropped", "kind": "Dependencies",
+    "title": "Drop the chartkick gem",
+    "summary": "A reviewer called it unused. It isn't: the admin dashboard loads it through a helper. Dropped as wrong.",
+    "updated_at": "2026-11-11T17:10:00Z"
+  },
+  "notes/n1": {
+    "change_id": "schedule-phone", "from": "person", "user_id": "u_demo_owner", "kind": "change_request",
+    "text": "Can the current hour stick to the top when you scroll?", "state": "answered", "created_at": "2026-11-11T18:30:00Z"
+  },
+  "notes/n2": {
+    "change_id": "schedule-phone", "from": "claude", "kind": "comment",
+    "text": "Done in #210: the current hour's card is pinned and highlighted. Screenshot is in the PR.", "created_at": "2026-11-11T19:02:00Z"
+  },
+  "notes/n3": {
+    "change_id": "stale-docs", "from": "person", "user_id": "u_demo_owner", "kind": "change_request",
+    "text": "Also add how to load the sample data.", "state": "open", "created_at": "2026-11-11T19:35:00Z"
+  }
+}

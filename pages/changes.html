@@ -1,0 +1,280 @@
+<title>__REPO__ Planned &amp; Changed</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column; a sticky summary bar, then change cards grouped by where they stand. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --sunk: #eef1ef; --fg: #18201d; --muted: #59645f; --line: #d9dfdb;
+  --accent: #0d6b58; --accent-fg: #ffffff; --accent-soft: #dff0eb;
+  --s-planned: #5b6670; --s-doing: #a35f00; --s-pr: #1a7f37; --s-landed: #6f42c1; --s-dropped: #7b8580; --s-reverted: #c03a2b;
+  --warn-bg: #fff4dc; --warn-fg: #6b4500;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --surface: #1a201d; --sunk: #151a18; --fg: #e4ebe7; --muted: #9aa69f; --line: #2c3531;
+  --accent: #4cc3a5; --accent-fg: #06201a; --accent-soft: #163a31;
+  --s-planned: #9aa5ae; --s-doing: #f0a73a; --s-pr: #4fc66d; --s-landed: #b392f0; --s-dropped: #87918c; --s-reverted: #ff7b6b;
+  --warn-bg: #3a2e12; --warn-fg: #f6d48c; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #1a201d; --sunk: #151a18; --fg: #e4ebe7; --muted: #9aa69f; --line: #2c3531;
+  --accent: #4cc3a5; --accent-fg: #06201a; --accent-soft: #163a31;
+  --s-planned: #9aa5ae; --s-doing: #f0a73a; --s-pr: #4fc66d; --s-landed: #b392f0; --s-dropped: #87918c; --s-reverted: #ff7b6b;
+  --warn-bg: #3a2e12; --warn-fg: #f6d48c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+a { color: var(--accent); }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+h3 { font-size: 1.08rem; font-weight: 600; }
+.sub { color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; }
+.mono { font-family: var(--mono); font-size: 0.86em; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { font: 500 0.85rem var(--sans); border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 4px 12px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip .n { font-family: var(--mono); font-variant-numeric: tabular-nums; opacity: 0.75; }
+.attn { margin-left: auto; font-size: 0.85rem; font-weight: 600; color: var(--warn-fg); background: var(--warn-bg); border-radius: 6px; padding: 4px 10px; }
+.notice { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 14px; font-size: 0.92rem; }
+.empty { border: 1px dashed var(--line); border-radius: 10px; padding: 28px 20px; color: var(--muted); text-align: center; }
+section.group { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; grid-template-columns: minmax(0, 1fr); border-left: 4px solid var(--stripe, var(--line)); }
+.card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+.pill { font: 600 0.75rem var(--sans); text-transform: uppercase; letter-spacing: 0.05em; color: var(--pc); border: 1px solid var(--pc); border-radius: 4px; padding: 1px 7px; }
+.s-planned { --pc: var(--s-planned); --stripe: var(--s-planned); }
+.s-in_progress { --pc: var(--s-doing); --stripe: var(--s-doing); }
+.s-pr_open { --pc: var(--s-pr); --stripe: var(--s-pr); }
+.s-landed { --pc: var(--s-landed); --stripe: var(--s-landed); }
+.s-dropped { --pc: var(--s-dropped); --stripe: var(--s-dropped); }
+.s-reverted { --pc: var(--s-reverted); --stripe: var(--s-reverted); }
+.card.s-dropped h3 { text-decoration: line-through; color: var(--muted); }
+.summary { margin: 0; max-width: 68ch; }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 0.92rem; }
+.facts dt { color: var(--muted); font-weight: 500; }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.shots figure { margin: 0; display: grid; gap: 4px; }
+.shots a { display: block; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--sunk); }
+.shots img { display: block; width: 100%; height: auto; max-height: 260px; object-fit: contain; object-position: top; }
+.shots figcaption { font-size: 0.8rem; color: var(--muted); }
+.tag { font: 600 0.7rem var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-right: 4px; }
+.thread { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.note { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; background: var(--sunk); min-width: 0; }
+.note.from-claude { background: var(--accent-soft); }
+.note-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; font-size: 0.8rem; color: var(--muted); }
+.note-head b { color: var(--fg); font-weight: 600; }
+.note p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.state { font-weight: 600; }
+.state.open { color: var(--warn-fg); background: var(--warn-bg); border-radius: 4px; padding: 0 6px; }
+.composer { display: grid; gap: 8px; }
+textarea { width: 100%; min-height: 64px; resize: vertical; font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button.btn { font: 600 0.88rem var(--sans); border-radius: 7px; padding: 7px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+button.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.btn:disabled { opacity: 0.5; cursor: default; }
+.flash { font-size: 0.85rem; color: var(--muted); }
+details > summary { cursor: pointer; color: var(--muted); font-size: 0.88rem; }
+.foot { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; }
+.foot ul { margin: 0; padding-left: 18px; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color 0.2s; } }
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(() => {
+  // Shared state. Everything shown comes from the artifact db: meta/run, changes/*, notes/*.
+  const S = { meta: null, changes: [], notes: [], got: { meta: false, changes: false, notes: false },
+    db: null, user: null, me: null, readOnly: false, offline: false, slow: false, error: "",
+    drafts: {}, busy: {}, flash: {}, filter: "all" };
+  try { S.filter = localStorage.getItem("pu-changes-filter") || "all"; } catch (e) {}
+
+  const STATUS = {
+    in_progress: { label: "In progress", group: "doing", ask: "Change the plan" },
+    pr_open: { label: "PR open", group: "doing", ask: "Ask for a change" },
+    planned: { label: "Planned", group: "planned", ask: "Change the plan" },
+    landed: { label: "Landed", group: "landed", ask: "Ask for a follow-up" },
+    reverted: { label: "Reverted", group: "dropped", ask: "Reopen this" },
+    dropped: { label: "Dropped", group: "dropped", ask: "Reopen this" },
+  };
+  const GROUPS = [
+    { key: "doing", label: "Doing now" }, { key: "planned", label: "Planned" },
+    { key: "landed", label: "Landed" }, { key: "dropped", label: "Dropped or reverted" },
+  ];
+
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat(Infinity)) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    return el;
+  }
+  const safeUrl = (u) => (typeof u === "string" && (/^https:\/\//.test(u) || /^\/_blob\//.test(u) || /^data:image\//.test(u))) ? u : null;
+  function ago(iso) {
+    const t = Date.parse(iso); if (!t) return "";
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 1) return "just now"; if (m < 60) return m + " min ago";
+    const hr = Math.round(m / 60); if (hr < 24) return hr + " h ago";
+    return new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  const statusOf = (c) => STATUS[c.status] ? c.status : "planned";
+
+  async function post(changeId, kind) {
+    const key = changeId + ":" + kind;
+    const text = (S.drafts[changeId] || "").trim();
+    if (!text || !S.db) return;
+    S.busy[key] = true; render();
+    try {
+      await S.db.collection("notes").add({ change_id: changeId, from: "person", user_id: S.me, kind, text,
+        state: "open", created_at: new Date().toISOString() });
+      S.drafts[changeId] = "";
+      S.flash[changeId] = kind === "change_request" ? "Sent. Claude acts on it at its next check and replies here." : "Comment saved.";
+    } catch (e) {
+      if (e && e.code === "invalid_argument") { S.readOnly = true; S.flash[changeId] = "You can read this page but not post on it."; }
+      else if (e && e.code === "quota_exceeded") S.flash[changeId] = "This page's storage is full. Ask the owner to clear old notes.";
+      else S.flash[changeId] = "Couldn't save. Check your connection and try again.";
+    }
+    S.busy[changeId + ":" + kind] = false; render();
+  }
+
+  function noteEl(n) {
+    const claude = n.from === "claude";
+    const states = { open: n.kind === "change_request" ? "Waiting for Claude" : "Unread", answered: "Answered", done: "Done" };
+    return h("div", { class: "note" + (claude ? " from-claude" : "") },
+      h("div", { class: "note-head" },
+        claude ? h("b", { text: "Claude" }) : h("b", { "data-uid": n.user_id || "", text: "Someone" }),
+        n.kind === "change_request" ? h("span", { class: "tag", text: "Change request" }) : null,
+        h("time", { datetime: n.created_at || "", text: ago(n.created_at) }),
+        !claude && n.state ? h("span", { class: "state " + n.state, text: states[n.state] || n.state }) : null),
+      h("p", { text: n.text || "" }));
+  }
+
+  function composer(changeId, askLabel) {
+    if (!S.db || S.readOnly) return null;
+    const id = "draft-" + changeId;
+    const ta = h("textarea", { id, placeholder: changeId === "_run" ? "A note on the whole run: priorities, what to leave alone, questions" : "Comment, or say what you'd like done differently", "aria-label": "Note" });
+    ta.value = S.drafts[changeId] || "";
+    ta.addEventListener("input", () => { S.drafts[changeId] = ta.value; });
+    const has = () => (S.drafts[changeId] || "").trim().length > 0;
+    return h("div", { class: "composer" }, ta,
+      h("div", { class: "row" },
+        h("button", { class: "btn primary", disabled: S.busy[changeId + ":change_request"], onclick: () => has() && post(changeId, "change_request") }, askLabel),
+        h("button", { class: "btn", disabled: S.busy[changeId + ":comment"], onclick: () => has() && post(changeId, "comment") }, "Comment"),
+        S.flash[changeId] ? h("span", { class: "flash", role: "status", text: S.flash[changeId] }) : null));
+  }
+
+  function card(c) {
+    const st = statusOf(c), info = STATUS[st];
+    const notes = S.notes.filter((n) => n.change_id === c.id).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    const pr = c.pr && safeUrl(c.pr.url) ? h("a", { class: "mono", href: c.pr.url, target: "_blank", rel: "noopener" }, "PR #" + (c.pr.number ?? "")) : null;
+    const issue = c.issue && safeUrl(c.issue.url) ? h("a", { class: "mono", href: c.issue.url, target: "_blank", rel: "noopener" }, "Issue #" + (c.issue.number ?? "")) : null;
+    const facts = [["Why", c.why], ["Evidence", c.evidence], ["Measured", c.measure], ["Checked by", c.verified]].filter(([, v]) => v);
+    const shots = (Array.isArray(c.screenshots) ? c.screenshots : []).filter((s) => safeUrl(s && s.url));
+    return h("article", { class: "card s-" + st, id: "c-" + c.id },
+      h("div", { class: "card-head" }, h("span", { class: "pill", text: info.label }),
+        c.kind ? h("span", { text: c.kind }) : null, pr, issue,
+        c.updated_at ? h("time", { datetime: c.updated_at, text: "updated " + ago(c.updated_at) }) : null),
+      h("h3", { text: c.title || "Untitled change" }),
+      c.summary ? h("p", { class: "summary", text: c.summary }) : null,
+      facts.length ? h("dl", { class: "facts" }, facts.map(([k, v]) => [h("dt", { text: k }), h("dd", { text: v })])) : null,
+      shots.length ? h("div", { class: "shots" }, shots.map((s) => h("figure", {},
+        h("a", { href: s.url, target: "_blank", rel: "noopener" }, h("img", { src: s.url, alt: s.caption || "Screenshot", loading: "lazy" })),
+        h("figcaption", {}, s.label ? h("span", { class: "tag", text: s.label }) : null, s.caption || "")))) : null,
+      (notes.length || (S.db && !S.readOnly)) ? h("div", { class: "thread" }, notes.map(noteEl), composer(c.id, info.ask)) : null);
+  }
+
+  function render() {
+    const app = document.getElementById("app");
+    const focused = document.activeElement && document.activeElement.id;
+    const sel = focused && document.activeElement.selectionStart;
+    const m = S.meta || {};
+    const repo = m.repo || "__REPO__";
+    const changes = S.changes.slice().sort((a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || String(a.title).localeCompare(String(b.title)));
+    const counts = {}; for (const g of GROUPS) counts[g.key] = 0;
+    for (const c of changes) counts[STATUS[statusOf(c)].group]++;
+    const openReqs = S.notes.filter((n) => n.from === "person" && n.state === "open").length;
+    const loaded = S.got.changes && S.got.meta;
+
+    const head = h("header", { style: "display:grid;gap:8px" },
+      h("h2", { text: "Project upgrade" }),
+      h("h1", { text: repo + " · Planned & Changed" }),
+      h("div", { class: "sub" },
+        safeUrl(m.repo_url) ? h("a", { href: m.repo_url, target: "_blank", rel: "noopener" }, m.repo_url.replace(/^https:\/\//, "")) : null,
+        m.phase ? h("span", { text: m.phase }) : null,
+        m.updated_at ? h("span", { text: "Updated " + ago(m.updated_at) }) : null,
+        safeUrl(m.decisions_url) ? h("a", { href: m.decisions_url, target: "_blank", rel: "noopener" }, "Approve / Feedback page") : null),
+      h("p", { class: "summary", style: "color:var(--muted)", text: "Every change this upgrade plans or makes, with its pull request and screenshots. Ask for a change on anything, planned or already landed, and Claude replies here." }));
+
+    const chips = h("nav", { class: "bar", "aria-label": "Filter" },
+      [{ key: "all", label: "All" }, ...GROUPS].map((g) => h("button", { class: "chip", "aria-pressed": String(S.filter === g.key),
+        onclick: () => { S.filter = g.key; try { localStorage.setItem("pu-changes-filter", g.key); } catch (e) {} render(); } },
+        g.label, h("span", { class: "n", text: g.key === "all" ? changes.length : counts[g.key] }))),
+      openReqs ? h("span", { class: "attn", text: openReqs + (openReqs === 1 ? " note waits" : " notes wait") + " for Claude" }) : null);
+
+    const notices = [];
+    if (S.offline) notices.push("Open this page on claude.ai to see the live list. It can't reach its data here.");
+    else if (S.error) notices.push(S.error);
+    else if (S.slow && !loaded) notices.push("The list can't be reached yet. It loads as soon as the connection answers.");
+    if (S.readOnly) notices.push("You can read this page, but posting is off for your access level.");
+
+    const body = [];
+    if (!loaded && !S.offline) body.push(h("div", { class: "empty", text: "Loading the run's changes…" }));
+    else if (!changes.length) body.push(h("div", { class: "empty" }, h("p", { text: "No changes yet." }),
+      h("p", { text: "Claude adds each change here as soon as it decides on it, then moves it along: planned, in progress, PR open, landed." })));
+    else for (const g of GROUPS) {
+      if (S.filter !== "all" && S.filter !== g.key) continue;
+      const list = changes.filter((c) => STATUS[statusOf(c)].group === g.key);
+      if (!list.length) continue;
+      body.push(h("section", { class: "group", "aria-label": g.label }, h("h2", { text: g.label + " · " + list.length }), list.map(card)));
+    }
+
+    const runNotes = S.notes.filter((n) => n.change_id === "_run").sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    const run = (S.db && !S.readOnly) || runNotes.length ? h("section", { class: "card", "aria-label": "Notes on the whole run" },
+      h("h3", { text: "Notes on the whole run" }), runNotes.map(noteEl), composer("_run", "Send to Claude")) : null;
+
+    const issues = Array.isArray(m.issues) ? m.issues.filter((i) => safeUrl(i && i.url)) : [];
+    const foot = issues.length ? h("footer", { class: "foot" }, h("h2", { text: "Issues filed for later" }),
+      h("ul", {}, issues.map((i) => h("li", {}, h("a", { href: i.url, target: "_blank", rel: "noopener" }, "#" + (i.number ?? "") + " " + (i.title || "")))))) : null;
+
+    app.replaceChildren(head, chips, ...notices.map((t) => h("div", { class: "notice", role: "status", text: t })), ...body, run || "", foot || "");
+    if (focused) { const el = document.getElementById(focused); if (el) { el.focus(); if (sel != null && el.setSelectionRange) try { el.setSelectionRange(sel, sel); } catch (e) {} } }
+    nameAuthors();
+  }
+
+  async function nameAuthors() {
+    if (!S.user) return;
+    const els = [...document.querySelectorAll("[data-uid]")].filter((e) => e.dataset.uid);
+    if (!els.length) return;
+    const ps = await S.user.profiles([...new Set(els.map((e) => e.dataset.uid))]);
+    for (const el of els) { const p = ps[el.dataset.uid]; if (p) el.textContent = p.isMe ? (p.name || "You") + " (you)" : (p.name || "Someone"); }
+  }
+
+  render();
+  (async () => {
+    if (!window.claude || !window.claude.use) { S.offline = true; render(); return; }
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db) { S.offline = true; render(); return; }
+    S.db = db; S.user = user;
+    if (user) { S.me = await user.id(); if ((await user.can("data.write")) === false) S.readOnly = true; }
+    const timer = setTimeout(() => { S.slow = true; render(); }, 10000);
+    const settle = (snap) => { if (!snap.metadata.fromCache) { clearTimeout(timer); S.slow = false; } };
+    const fail = (e) => { clearTimeout(timer); S.error = e && e.code === "revoked" ? "Your access to this page changed. Reload to see it." : "The live list stopped updating. Reload the page to reconnect."; render(); };
+    db.doc("meta/run").onSnapshot((s) => { S.meta = s.exists ? s.data() : null; S.got.meta = true; settle(s); render(); }, fail);
+    db.collection("changes").onSnapshot((q) => { S.changes = q.docs.map((d) => ({ ...d.data(), id: d.id })); S.got.changes = true; settle(q); render(); }, fail);
+    db.collection("notes").onSnapshot((q) => { S.notes = q.docs.map((d) => ({ ...d.data(), id: d.id })); S.got.notes = true; settle(q); render(); }, fail);
+  })();
+})();
+</script>

@@ -1,0 +1,51 @@
+{
+  "meta/run": {
+    "repo": "tidepool",
+    "repo_url": "https://github.com/example/tidepool",
+    "changes_url": "https://claude.ai/code/artifact/example-changes",
+    "updated_at": "2026-11-11T19:45:00Z",
+    "shipped": [
+      { "number": 208, "title": "Lane schedule fits a phone screen", "url": "https://github.com/example/tidepool/pull/208", "state": "landed" },
+      { "number": 209, "title": "Stop three tests sleeping through real retry backoff", "url": "https://github.com/example/tidepool/pull/209", "state": "landed" },
+      { "number": 211, "title": "Remove the WaitlistMailer", "url": "https://github.com/example/tidepool/pull/211", "state": "open" }
+    ],
+    "issues": [
+      { "number": 214, "title": "Move member photos out of public/ behind a signed URL", "url": "https://github.com/example/tidepool/issues/214" }
+    ],
+    "coverage": {
+      "read": ["app/models", "app/controllers", "app/jobs", "config", "docs"],
+      "sampled": ["app/frontend (12 of 140 components)"],
+      "not_read": ["vendor/", "db/seeds/*.json (imported data)"],
+      "dropped": ["chartkick 'unused' (a helper loads it)"]
+    }
+  },
+  "decisions/photos-public": {
+    "order": 1, "group": "Privacy and access", "severity": "high", "trust": "confirmed",
+    "title": "Make member photos private",
+    "what": "Member profile photos are served from public/uploads, so anyone with a link can open them.",
+    "why": "1,240 photos, including children on the swim team. Links get pasted into group chats.",
+    "approve_does": "Move uploads behind signed URLs that expire after 5 minutes, and delete the public copies once the move is verified.",
+    "need": "A yes, since old links people have saved will stop working.",
+    "links": [ { "label": "Issue #214", "url": "https://github.com/example/tidepool/issues/214" } ]
+  },
+  "decisions/waitlist-table": {
+    "order": 2, "group": "Data", "severity": "medium", "trust": "confirmed",
+    "title": "Drop the waitlist_entries table",
+    "what": "The table has 3,118 rows and nothing reads or writes it since the waitlist was removed in March.",
+    "why": "Dead data with names and phone numbers in it.",
+    "approve_does": "Export it to a CSV in the private backups bucket, then drop the table in a migration.",
+    "need": "A yes or no: dropping a table can't be undone without the export."
+  },
+  "decisions/nightly-email": {
+    "order": 3, "group": "Alerts that message people", "severity": "low", "trust": "reviewer",
+    "title": "Stop the nightly summary email to coaches",
+    "what": "It goes to 14 coaches every night; 11 have never opened one (mail provider stats).",
+    "approve_does": "Turn it off for everyone except the 3 who open it.",
+    "claude_reply": "Good call on keeping it for head coaches. I'll keep it for anyone with the head_coach role too, which adds 2 people.",
+    "claude_reply_at": "2026-11-11T19:44:00Z"
+  },
+  "responses/nightly-email": {
+    "status": "feedback", "feedback": "Keep it for the head coaches even if they don't open it.", "title": "Stop the nightly summary email to coaches",
+    "user_id": "u_demo_owner", "updated_at": "2026-11-11T19:41:00Z", "history": []
+  }
+}

@@ -28,10 +28,9 @@ for a change on any card, planned or already landed, and Claude replies on the c
    calls that are truly yours: data deletion, privacy and access, secrets, alerts that message
    people, money.
 
-It also keeps the run cheap. Before anyone reads anything it lists the repo's big files
-(lockfiles, data dumps, pages full of inlined images, identical copies) so no reader opens
-them whole, it reads screenshots tiled on one contact sheet, and it breaks up the big files
-so every later session in the repo costs less too.
+It also deals with big files. Before anyone reads anything it lists them (lockfiles, data
+dumps, pages full of inlined images, identical copies) so no reader wastes its context on
+them, then breaks them up so every later session in the repo is spared them too.
 
 ## Two pages, both two-way
 

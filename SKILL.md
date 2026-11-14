@@ -48,7 +48,41 @@ becoming a wrong fix or a wrong line in the report.
 Say what it will cost before step 3. A full read of a large repo is millions of tokens across
 the reviewers; the first run of this method (a Rails app of about 5,000 files) hit the account's
 weekly limit minutes in and resumed 16 hours later. If the repo is small enough to read yourself,
-skip the fan-out.
+skip the fan-out. Then run it the cheap way (next section).
+
+## Keep it cheap
+
+A session's cost is its turns times its context, not the size of the repo. Whatever a reader
+opens is carried on every later turn of that session. In a 3D modelling session, one lead
+that read a 250 KB file and full-size stills early re-read about 300M cached tokens over ~640
+turns; a redesign of the same scale run the way below used about 40% of the tokens (measured
+in [3d-model-skill](https://github.com/kylefritz/3d-model-skill), where these rules come from).
+
+- **Know the big files before anyone reads anything.**
+  `python3 <skill>/scripts/big_files.py <repo>` (`<skill>` is the folder this file is in) lists
+  every tracked file of 50 KB and up with its rough token count and what to do with it:
+  - **skip** (lockfiles, vendored, minified, build output, source maps): never read.
+  - **binary**: never read as text. Look at an image as an image, and only one you need.
+  - **data** (JSON, CSV, SQL dumps, logs, notebooks, fixtures, cassettes): sample it, never
+    read it whole: `head -c 2000`, `jq 'keys'` or `jq '.[0]'`, `xsv headers` and `xsv count`,
+    `sqlite3 db .schema`, `wc -l`.
+  - **source**: read by outline (`rg -n '^(def|class|function|export) '`) and then the
+    sections you need. Code of about 60 KB and up is a split candidate (step 5).
+  - Source that is mostly **long lines** (the script flags them) is data pasted into code,
+    usually base64 images or a JSON blob. Read around it, never through it.
+  - **Identical copies** (the script lists them) are "no longer needed" findings by themselves.
+- **The lead stays thin.** It reads the request, the outline and the reports, and verifies
+  findings by reading the few lines in question. It never reads a big file whole or a
+  full-size screenshot, and pipes long command output through `tail` or `rg`.
+- **Reviewers get the size list.** Every brief carries the skip and sample lists, so no
+  reviewer spends its budget on a lockfile or a 4 MB page of inlined images.
+- **Reviewers can run on a cheaper model** (`model: sonnet` on the Agent call): the lead
+  verifies every finding anyway (step 4). Ask for findings as a compact list, not prose. Send
+  follow-up questions to the same reviewer (SendMessage) so its reading is reused, rather than
+  starting a fresh one.
+- **Read screenshots tiled.** `uv run <skill>/scripts/contact_sheet.py out/sheet.jpg --dir shots
+  before-phone after-phone` makes one labelled sheet under 1568 px. Put shots of the same width
+  on one sheet (phone with phone); a desktop shot beside phone ones comes out tiny.
 
 ## Companion skill and the pages
 
@@ -72,6 +106,10 @@ skip the fan-out.
   the owner says to skip the start-up checks, skip them.
 - Count tracked files by top-level folder. That table is how you split the areas, and it shows
   the oddities early (694 files of imported documents in one folder is a finding by itself).
+- Run `<skill>/scripts/big_files.py` (Keep it cheap, above) and keep its output: it becomes the skip
+  and sample lists in every brief, and its big files, pasted-in data and identical copies are
+  findings. In one real repo it found 97 MB of extra copies (the same slide images in up to
+  seven deck folders) and three HTML pages of 4 to 6 MB that were over 90% inlined base64.
 - Look at what is on disk around the repo too: worktrees, local branches, open PRs. Stale ones
   are the cheapest "no longer needed" there is. Delete local branches whose PR merged (branch
   head equals the merged PR's head commit) without asking.
@@ -111,6 +149,9 @@ Each brief says:
 
 - **Scope**, and who owns the neighbouring scopes, so nothing is audited twice. Reviewers may
   read outside their scope to prove a claim.
+- **The size list for its scope:** which files to skip, which to sample and how, and that
+  source files are read by outline first. A data file is reviewed by its shape (schema, row
+  count, a few records, who reads it), not line by line.
 - **The four categories**, each with the concrete forms it takes in this repo. Read the repo's
   agent instructions first and turn their rules into things to check (naming rules, banned
   patterns, a registry everything must be in). The rules are where "inconsistent" lives.
@@ -190,7 +231,8 @@ description, made with the `pr-screenshots` skill:
   that no longer appears. Skip the image only when there is truly nothing a picture adds (a
   comment typo, a dependency removal).
 - Look at every image yourself before uploading, and check it for personal data, secrets and
-  other people's records.
+  other people's records. Look at them tiled on a contact sheet (Keep it cheap), then open
+  full size only the one a sheet tile leaves in doubt.
 - **Run the thing you changed.** A browser check of a reworked page once caught a bug in the
   fix itself that every test had passed.
 
@@ -229,6 +271,20 @@ Two fixes are worth looking for in every repo:
   owner first.
 - **Secrets in the tree.** Remove the value from the file, and say that history still has it and
   only rotation fixes that. Rotation is the owner's.
+- **Big files every session pays for.** Each agent that touches the repo after you reads them
+  again, so breaking them up keeps paying off:
+  - Split a source file of about 60 KB and up into one module per part, as its own PR before
+    any other edit to it, and prove the split changes nothing: the same tests pass, and where
+    the code builds something (a bundle, a page, a model) the output is byte-identical.
+  - Move data pasted into code (base64 images, big JSON literals) into its own files next to
+    the code that loads it. Check the page or build output is unchanged.
+  - Collapse identical copies to one, with every user pointing at it.
+  - A big data file the code needs stays, but say how to read it: add a line to the repo's
+    CLAUDE.md or AGENTS.md naming it and the command that samples it (`jq '.[0]'`,
+    `xsv headers`), so the next agent doesn't open it whole.
+  - Deleting a big file nobody reads, or one that is a copy of data held elsewhere, is a
+    normal "no longer needed" fix. Rewriting git history to shrink the clone is the owner's
+    call: an Approve / Feedback item.
 
 If a permission check blocks an edit (CI workflows, permission settings), don't route around it.
 Make it an Approve / Feedback item.
@@ -290,4 +346,7 @@ you did the owner should know about, and both page links.
 - The Planned & Changed page matches what actually happened, every note on it has a reply, and
   the owner could steer the plan before it shipped.
 - The owner can act on the Approve / Feedback page without reading the code.
-- The pages admit what the run did not cover and what it got wrong.
+- The pages admit what the run did not cover and what it got wrong. Data files that were
+  sampled, not read, are listed under coverage's `sampled`.
+- No reader opened a lockfile, a minified bundle or a big data file whole, and the repo's big
+  files are smaller, split, or documented for the next agent.

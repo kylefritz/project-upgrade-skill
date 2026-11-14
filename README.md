@@ -28,6 +28,11 @@ for a change on any card, planned or already landed, and Claude replies on the c
    calls that are truly yours: data deletion, privacy and access, secrets, alerts that message
    people, money.
 
+It also keeps the run cheap. Before anyone reads anything it lists the repo's big files
+(lockfiles, data dumps, pages full of inlined images, identical copies) so no reader opens
+them whole, it reads screenshots tiled on one contact sheet, and it breaks up the big files
+so every later session in the repo costs less too.
+
 ## Two pages, both two-way
 
 Both are private [Claude artifacts](https://claude.ai) backed by the artifact's database, so
@@ -92,6 +97,8 @@ destructive data changes or alerts that message people; those go on the Approve 
 | `reference.md` | publishing the pages, their access rules, every document's shape, and the read-back queries |
 | `pages/changes.html` | the Planned & Changed page template |
 | `pages/decisions.html` | the Approve / Feedback page template |
+| `scripts/big_files.py` | big tracked files with token estimates, how to read each kind, pasted-in data and identical copies (standard library only) |
+| `scripts/contact_sheet.py` | tile screenshots into one labelled sheet under 1568 px (`uv run`) |
 | `scripts/preview.py`, `dev/` | preview a page locally with demo data and a stand-in runtime, for screenshots and click-testing |
 
 Preview a page without publishing it:

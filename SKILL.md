@@ -48,15 +48,16 @@ becoming a wrong fix or a wrong line in the report.
 Say what it will cost before step 3. A full read of a large repo is millions of tokens across
 the reviewers; the first run of this method (a Rails app of about 5,000 files) hit the account's
 weekly limit minutes in and resumed 16 hours later. If the repo is small enough to read yourself,
-skip the fan-out. Then run it the cheap way (next section).
+skip the fan-out. Run the reviewers on the same model as this session; don't downgrade them to
+save tokens. Save them by not reading big files whole (next section).
 
-## Keep it cheap
+## Big files
 
-A session's cost is its turns times its context, not the size of the repo. Whatever a reader
-opens is carried on every later turn of that session. In a 3D modelling session, one lead
-that read a 250 KB file and full-size stills early re-read about 300M cached tokens over ~640
-turns; a redesign of the same scale run the way below used about 40% of the tokens (measured
-in [3d-model-skill](https://github.com/kylefritz/3d-model-skill), where these rules come from).
+Whatever a reader opens stays in its context for every later turn: a 4 MB page of inlined
+images read by mistake crowds out the code it was sent to review, and gets paid for again on
+every turn after. (In [3d-model-skill](https://github.com/kylefritz/3d-model-skill), one
+session that read a 250 KB file and full-size stills early re-read about 300M cached tokens
+over ~640 turns.)
 
 - **Know the big files before anyone reads anything.**
   `python3 <skill>/scripts/big_files.py <repo>` (`<skill>` is the folder this file is in) lists
@@ -71,18 +72,9 @@ in [3d-model-skill](https://github.com/kylefritz/3d-model-skill), where these ru
   - Source that is mostly **long lines** (the script flags them) is data pasted into code,
     usually base64 images or a JSON blob. Read around it, never through it.
   - **Identical copies** (the script lists them) are "no longer needed" findings by themselves.
-- **The lead stays thin.** It reads the request, the outline and the reports, and verifies
-  findings by reading the few lines in question. It never reads a big file whole or a
-  full-size screenshot, and pipes long command output through `tail` or `rg`.
 - **Reviewers get the size list.** Every brief carries the skip and sample lists, so no
-  reviewer spends its budget on a lockfile or a 4 MB page of inlined images.
-- **Reviewers can run on a cheaper model** (`model: sonnet` on the Agent call): the lead
-  verifies every finding anyway (step 4). Ask for findings as a compact list, not prose. Send
-  follow-up questions to the same reviewer (SendMessage) so its reading is reused, rather than
-  starting a fresh one.
-- **Read screenshots tiled.** `uv run <skill>/scripts/contact_sheet.py out/sheet.jpg --dir shots
-  before-phone after-phone` makes one labelled sheet under 1568 px. Put shots of the same width
-  on one sheet (phone with phone); a desktop shot beside phone ones comes out tiny.
+  reviewer spends its context on a lockfile or a 4 MB page of inlined images.
+- **Then break them up** (step 5), so every later session in the repo is spared them too.
 
 ## Companion skill and the pages
 
@@ -106,7 +98,7 @@ in [3d-model-skill](https://github.com/kylefritz/3d-model-skill), where these ru
   the owner says to skip the start-up checks, skip them.
 - Count tracked files by top-level folder. That table is how you split the areas, and it shows
   the oddities early (694 files of imported documents in one folder is a finding by itself).
-- Run `<skill>/scripts/big_files.py` (Keep it cheap, above) and keep its output: it becomes the skip
+- Run `<skill>/scripts/big_files.py` (Big files, above) and keep its output: it becomes the skip
   and sample lists in every brief, and its big files, pasted-in data and identical copies are
   findings. In one real repo it found 97 MB of extra copies (the same slide images in up to
   seven deck folders) and three HTML pages of 4 to 6 MB that were over 90% inlined base64.
@@ -231,8 +223,9 @@ description, made with the `pr-screenshots` skill:
   that no longer appears. Skip the image only when there is truly nothing a picture adds (a
   comment typo, a dependency removal).
 - Look at every image yourself before uploading, and check it for personal data, secrets and
-  other people's records. Look at them tiled on a contact sheet (Keep it cheap), then open
-  full size only the one a sheet tile leaves in doubt.
+  other people's records. For a batch, `uv run <skill>/scripts/contact_sheet.py out/sheet.jpg
+  --dir shots before-phone after-phone` tiles them into one labelled sheet (same-width shots
+  together); open full size any one the sheet leaves in doubt.
 - **Run the thing you changed.** A browser check of a reworked page once caught a bug in the
   fix itself that every test had passed.
 
